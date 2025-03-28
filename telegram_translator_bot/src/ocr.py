@@ -12,6 +12,7 @@ from PIL import Image, ImageEnhance, ImageFilter
 import tempfile
 import langid
 import logging
+import platform
 
 # 打印pytesseract版本和路径，用于调试
 print(f"pytesseract版本: {pytesseract.__version__}")
@@ -23,8 +24,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from config.config import OCR_API, GOOGLE_VISION_API_KEY
 from src.translator import TextTranslator
 
-# 明确指定Tesseract路径
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+# 根据操作系统设置Tesseract路径
+if platform.system() == "Windows":
+    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+else:
+    pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
 # 打印设置后的路径确认
 print(f"设置后的tesseract路径: {pytesseract.pytesseract.tesseract_cmd}")

@@ -16,6 +16,7 @@ import requests
 import platform
 import hashlib
 from urllib.parse import urljoin
+import pytesseract
 
 # 检查Python版本
 python_version = platform.python_version()
@@ -59,6 +60,8 @@ processed_file_ids = {}
 # 控制重试次数和间隔
 MAX_RETRIES = 3
 RETRY_DELAY = 5  # 秒
+
+pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'
 
 def get_updates(offset=None):
     """获取机器人更新"""
