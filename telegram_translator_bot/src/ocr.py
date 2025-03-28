@@ -26,7 +26,7 @@ from src.translator import TextTranslator
 
 # 根据操作系统设置Tesseract路径
 if platform.system() == "Windows":
-    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    pytesseract.pytesseract.tesseract_cmd = r"C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
 else:
     pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
@@ -96,12 +96,33 @@ class ImageOCR:
                 # chi_sim: 简体中文, eng: 英文, jpn: 日文
                 image = Image.open(enhanced_image_path)
                 
+                # 打印详细的调试信息
+                logging.info(f"OCR处理图片: {image_path}")
+                logging.info(f"Tesseract路径: {pytesseract.pytesseract.tesseract_cmd}")
+                
+                # 获取可用的语言列表
+                try:
+                    languages = pytesseract.get_languages()
+                    logging.info(f"Tesseract可用语言: {languages}")
+                except Exception as lang_error:
+                    logging.error(f"获取Tesseract语言列表错误: {str(lang_error)}")
+                
                 # 尝试使用多语言识别
                 try:
+                    # 先尝试使用简体中文+英文
+                    logging.info("尝试使用简体中文+英文识别")
                     text = pytesseract.image_to_string(image, lang='chi_sim+eng')
+                    if not text.strip():
+                        # 如果结果为空，尝试仅使用英文
+                        logging.info("中英文识别结果为空，尝试仅使用英文识别")
+                        text = pytesseract.image_to_string(image, lang='eng')
                 except Exception as multi_lang_error:
-                    print(f"多语言识别错误: {str(multi_lang_error)}，尝试仅使用英文...")
-                    text = pytesseract.image_to_string(image)
+                    logging.error(f"多语言识别错误: {str(multi_lang_error)}，尝试仅使用英文...")
+                    try:
+                        text = pytesseract.image_to_string(image, lang='eng')
+                    except Exception as eng_error:
+                        logging.error(f"英文识别错误: {str(eng_error)}，尝试不指定语言...")
+                        text = pytesseract.image_to_string(image)
                 
                 # 如果增强图像是临时创建的，删除它
                 if enhanced_image_path != image_path and os.path.exists(enhanced_image_path):
@@ -113,9 +134,11 @@ class ImageOCR:
                 pass
                 
         except Exception as e:
-            print(f"OCR错误: {str(e)}")
+            logging.error(f"OCR错误: {str(e)}")
             return ""
         
+        # 打印OCR结果
+        logging.info(f"OCR结果: {text[:100]}..." if len(text) > 100 else f"OCR结果: {text}")
         return text.strip()
     
     def process_image_to_text(self, image_path):

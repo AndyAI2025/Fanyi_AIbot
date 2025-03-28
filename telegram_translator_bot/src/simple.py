@@ -32,7 +32,7 @@ from src.translator import TextTranslator
 from src.ocr import ImageOCR
 from config.config import TEMP_FOLDER
 
-# 配置日志
+# 设置更详细的日志格式
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -61,7 +61,10 @@ processed_file_ids = {}
 MAX_RETRIES = 3
 RETRY_DELAY = 5  # 秒
 
-pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'
+if platform.system() == "Windows":
+    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+else:
+    pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
 def get_updates(offset=None):
     """获取机器人更新"""
@@ -106,6 +109,41 @@ def send_message(chat_id, text):
                 time.sleep(RETRY_DELAY * (retry + 1))
         except Exception as e:
             logger.error(f"发送消息时出错 (尝试 {retry+1}/{MAX_RETRIES}): {e}")
+            if retry < MAX_RETRIES - 1:
+                time.sleep(RETRY_DELAY * (retry + 1))
+    
+    return {"ok": False}
+
+
+def delete_message(chat_id, message_id):
+    """删除消息"""
+    if not message_id:
+        logger.warning(f"尝试删除消息失败: message_id为空")
+        return {"ok": False}
+        
+    url = urljoin(BASE_URL, "deleteMessage")
+    params = {
+        "chat_id": chat_id,
+        "message_id": message_id
+    }
+    
+    for retry in range(MAX_RETRIES):
+        try:
+            # 添加超时参数
+            logger.info(f"尝试删除消息: chat_id={chat_id}, message_id={message_id}")
+            response = requests.post(url, params=params, timeout=30)
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("ok"):
+                    logger.info(f"成功删除消息: message_id={message_id}")
+                    return result
+                else:
+                    logger.error(f"删除消息API返回错误: {result.get('description', '未知错误')}")
+            else:
+                logger.error(f"删除消息失败，状态码: {response.status_code}，响应: {response.text}")
+            time.sleep(RETRY_DELAY * (retry + 1))
+        except Exception as e:
+            logger.error(f"删除消息时出错 (尝试 {retry+1}/{MAX_RETRIES}): {e}")
             if retry < MAX_RETRIES - 1:
                 time.sleep(RETRY_DELAY * (retry + 1))
     
@@ -228,8 +266,12 @@ def handle_message(message):
             else:
                 return
         
-        # 发送处理中消息
-        processing_msg = send_message(chat_id, "正在处理图片，请稍等...")
+        # 告知用户正在处理
+        processing_result = send_message(chat_id, "正在处理图片，请稍等...")
+        processing_msg_id = None
+        if processing_result and processing_result.get("ok"):
+            processing_msg_id = processing_result["result"]["message_id"]
+            logger.info(f"已发送处理中消息: message_id={processing_msg_id}")
         
         file_info = get_file(file_id)
         
@@ -249,10 +291,14 @@ def handle_message(message):
                     result = ocr_engine.process_image_to_text(temp_path)
                     
                     # 删除临时文件
-                    try:
-                        os.unlink(temp_path)
-                    except Exception as e:
-                        logger.error(f"删除临时文件时出错: {e}")
+                    os.unlink(temp_path)
+                    
+                    # 发送处理完成消息（稍后也会删除）
+                    complete_result = send_message(chat_id, "处理完成。")
+                    complete_msg_id = None
+                    if complete_result and complete_result.get("ok"):
+                        complete_msg_id = complete_result["result"]["message_id"]
+                        logger.info(f"已发送处理完成消息: message_id={complete_msg_id}")
                     
                     # 准备回复消息
                     if result["success"]:
@@ -271,19 +317,42 @@ def handle_message(message):
                         "result": reply_text
                     }
                     
+                    # 发送实际的OCR结果
                     send_message(chat_id, reply_text)
+                    
+                    # 删除处理中消息
+                    if processing_msg_id:
+                        delete_result = delete_message(chat_id, processing_msg_id)
+                        if not delete_result.get("ok"):
+                            logger.warning(f"删除处理中消息失败: message_id={processing_msg_id}")
+                    
+                    # 删除处理完成消息
+                    if complete_msg_id:
+                        delete_result = delete_message(chat_id, complete_msg_id)
+                        if not delete_result.get("ok"):
+                            logger.warning(f"删除处理完成消息失败: message_id={complete_msg_id}")
                 else:
                     send_message(chat_id, "下载图片失败，请重试。")
+                    # 删除处理中的消息
+                    if processing_msg_id:
+                        delete_result = delete_message(chat_id, processing_msg_id)
+                        if not delete_result.get("ok"):
+                            logger.warning(f"删除处理中消息失败: message_id={processing_msg_id}")
             except Exception as e:
                 logger.error(f"处理图片时出错: {e}")
-                send_message(chat_id, f"处理图片时出错，请重试。错误信息: {str(e)[:100]}")
-                # 确保临时文件被删除
-                if os.path.exists(temp_path):
-                    try:
-                        os.unlink(temp_path)
-                    except:
-                        pass
+                error_msg = f"处理图片时出错，请重试。错误信息: {str(e)[:100]}"
+                send_message(chat_id, error_msg)
+                # 删除处理中的消息
+                if processing_msg_id:
+                    delete_result = delete_message(chat_id, processing_msg_id)
+                    if not delete_result.get("ok"):
+                        logger.warning(f"删除处理中消息失败: message_id={processing_msg_id}")
         else:
+            # 删除处理中的消息
+            if processing_msg_id:
+                delete_result = delete_message(chat_id, processing_msg_id)
+                if not delete_result.get("ok"):
+                    logger.warning(f"删除处理中消息失败: message_id={processing_msg_id}")
             send_message(chat_id, "获取图片信息失败，请重试。")
     
     else:
@@ -345,4 +414,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()
