@@ -1,0 +1,76 @@
+Telegram翻译机器人开发日志
+
+项目开始日期：2023年11月1日
+
+项目目标：
+1. 开发一个Telegram翻译机器人
+2. 支持文本翻译（任意语言翻译成中文）
+3. 支持图片文字识别并翻译
+4. 部署到阿里云服务器
+
+需要安装的工具和软件：
+1. Python（已安装 - 版本3.11.x）
+2. 代码编辑器（已选择VS Code）
+3. Git（已安装）
+4. Tesseract OCR（已安装）
+
+开发进度记录：
+2023年11月1日 - 项目启动，创建开发日志，规划开发步骤
+2023年11月1日 - 检查Python环境，目标使用Python 3.11版本以提高稳定性
+2023年11月1日 - 创建项目目录结构（telegram_translator_bot目录，包含src和config子目录）
+2023年11月1日 - 创建并完成主要代码文件：
+   - config/config.py：配置文件，用于存储API密钥和其他设置
+   - src/translator.py：翻译模块，使用translate库实现文本翻译
+   - src/ocr.py：OCR模块，使用pytesseract实现图片文字识别
+   - src/bot.py：Telegram机器人主模块，整合翻译和OCR功能
+2023年11月1日 - 创建requirements.txt文件，列出项目所需的依赖包
+2023年11月1日 - 创建README.md文件，提供项目信息和使用说明
+2023年11月1日 - 创建deployment_guide.md文件，详细说明如何将机器人部署到阿里云服务器
+2023年11月1日 - 安装项目依赖包：
+   - python-telegram-bot: Telegram机器人API的Python封装
+   - translate: 翻译API的Python客户端
+   - pytesseract: 用于图片文字识别的Python库
+   - Pillow: 用于图片处理的Python库
+   - langid: 用于语言识别的Python库
+2023年11月1日 - 创建temp目录，用于存储用户发送的图片
+2023年11月1日 - 添加了获取Telegram Bot API令牌的详细说明
+
+2025年3月28日 - 项目更新，检查代码兼容性问题
+2025年3月28日 - 发现Python 3.13与python-telegram-bot库存在兼容性问题
+2025年3月28日 - 尝试解决timezone相关错误，添加pytz库并禁用JobQueue
+2025年3月28日 - 发现imghdr模块在Python 3.13中已被移除，添加替代实现
+2025年3月28日 - 调整代码，创建bot_simple.py使用旧版API，但仍存在兼容性问题
+2025年3月28日 - 创建simple.py，使用HTTP请求直接与Telegram API通信，完全不依赖python-telegram-bot库
+2025年3月28日 - 成功运行simple.py，解决所有兼容性问题
+2025年3月28日 - 决定统一使用Python 3.11版本以提高稳定性，更新依赖要求
+
+-------------------
+
+待办事项：
+✓ 安装Python环境
+✓ 安装必要的Python库
+✓ 创建项目结构
+✓ 编写翻译功能
+✓ 编写OCR功能
+✓ 整合Telegram机器人功能
+✓ 编写部署文档
+✓ 创建临时文件目录
+✓ 安装Tesseract OCR
+✓ 获取Telegram Bot API令牌
+✓ 测试机器人功能
+✓ 解决Python版本兼容性问题
+□ 部署到阿里云服务器
+
+下一步计划：
+1. 使用Python 3.11版本重新测试所有功能
+2. 优化图片处理功能
+3. 部署到阿里云服务器
+4. 添加更多语言支持选项
+
+问题记录：
+2023年11月1日 遇到的问题：安装依赖包时遇到了一些冲突
+解决方案：调整了requirements.txt文件中的版本要求，使用了更稳定的版本
+
+2025年3月28日 遇到的问题：Python 3.13与python-telegram-bot库存在兼容性问题
+解决方案：创建simple.py使用HTTP请求直接与Telegram API通信，完全避开库兼容性问题，同时决定统一使用Python 3.11版本提高稳定性
+------------------- 
