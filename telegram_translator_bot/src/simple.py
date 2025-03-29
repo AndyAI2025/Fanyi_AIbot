@@ -306,10 +306,21 @@ def handle_message(message):
                             # 如果原文和译文相同（可能已经是中文）
                             reply_text = f"图片中的文字已经是中文，无需翻译。\n\n文字内容:\n{result['original']}"
                         else:
-                            # 显示原文和译文
-                            reply_text = f"图片OCR结果 [{result['detected_language']}]:\n{result['original']}\n\n译文:\n{result['translated']}"
+                            if result["original"]:
+                                # 显示原文和译文
+                                reply_text = f"图片OCR结果 [{result['detected_language']}]:\n{result['original']}\n\n译文:\n{result['translated']}"
+                            else:
+                                # 如果没有文字但有内容描述
+                                reply_text = "图片中没有检测到文字，但已分析图片内容。"
+                        
+                        # 如果有内容描述，添加到回复中
+                        if result.get("content_description"):
+                            if reply_text:
+                                reply_text += "\n\n图片内容描述:\n" + result["content_description"]
+                            else:
+                                reply_text = "图片内容描述:\n" + result["content_description"]
                     else:
-                        reply_text = "无法从图片中提取文字。请确保图片中包含清晰的文本内容。"
+                        reply_text = "无法从图片中提取文字或理解内容。请确保图片清晰可见。"
                     
                     # 记录处理结果到缓存
                     processed_file_ids[file_id] = {

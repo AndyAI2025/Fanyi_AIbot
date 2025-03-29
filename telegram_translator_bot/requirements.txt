@@ -6,3 +6,6 @@ Pillow==9.5.0
 langid==1.1.6
 # 可选依赖
 # python-telegram-bot==13.15 # 如需使用bot_simple.py
+
+# 对于 Gemini API 支持
+google-generativeai>=0.3.0

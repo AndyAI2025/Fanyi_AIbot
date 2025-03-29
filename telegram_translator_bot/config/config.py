@@ -18,8 +18,11 @@ TELEGRAM_BOT_TOKEN = "7843869894:AAGzc9u9lVEHf6kSIQOXLmbW7Om3E6idH6c"
 TRANSLATION_API = "google"  # 使用哪种翻译API：'google'或'deepl'等
 DEEPL_API_KEY = "YOUR_DEEPL_API_KEY"  # 如果使用DeepL需要填写
 
+# Google Gemini API设置 
+GEMINI_API_KEY = "AIzaSyDGZiLlCNH9SjTExG82j3X3KoOwYAThVgk"  # Gemini API密钥
+
 # OCR（光学字符识别）API设置
-OCR_API = "tesseract"  # 使用哪种OCR: 'tesseract'（本地）或'google_vision'等
+OCR_API = "gemini"  # 使用哪种OCR: 'tesseract'（本地）, 'google_vision' 或 'gemini'（新增）
 GOOGLE_VISION_API_KEY = "YOUR_GOOGLE_VISION_API_KEY"  # 如果使用Google Vision API需要填写
 
 # 目标语言（中文）
